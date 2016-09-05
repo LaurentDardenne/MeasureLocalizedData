@@ -5,7 +5,9 @@ Retrieves the nonexistent keys and the unused keys.
 
 Control only one file, example a module :
 ```Powershell
- #PowershellGet
+ #PowershellGet                                                                                                            
+Import-Module MeasureLocalizedData
+ 
 $Module='.\PSModule.psm1'
 Test-ImportLocalizedData -Primary $Module
 ```

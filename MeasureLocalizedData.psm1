@@ -1,6 +1,5 @@
-﻿#Controle l'usage de clé de localisation.
-#
-#Permet de retrouver les clés inexistantes et celle inutilisées.
+﻿#Control the use of the localization keys.
+#The purpose is to find the nonexistent keys and the unused keys.
 
 [string[]]$script:AllCultures=[System.Globalization.CultureInfo]::GetCultures('AllCultures')|Select -ExpandProperty Name
 $script:Cultures=[System.Collections.Generic.HashSet[String]]::new($script:AllCultures,[StringComparer]::InvariantCulture)
@@ -127,7 +126,7 @@ param (
    if ( (Get-Variable $ErrorsList).Value.Count -gt 0  )
    {
       $Er= New-Object System.Management.Automation.ErrorRecord(
-              (New-Object System.ArgumentException("La syntaxe du code est erronée. $ParseFile")), 
+              (New-Object System.ArgumentException("The syntax of the code is incorrect. $ParseFile")), 
               "InvalidSyntax", 
               "InvalidData",
               "[AST]"
@@ -152,27 +151,28 @@ Function Split-VariablePath {
 }#Split-VariablePath
 
 Function New-LocalizedDataInformations{
-param (
-  $Path,
-  [System.Management.Automation.Language.StaticBindingResult] $Binding
-)
-[pscustomobject]@{
-    PSTypeName='LocalizedDataInformations'
-      #Nom du fichier de localisation des messages 
-    FileName=$binding.BoundParameters['FileName'].ConstantValue
-      #Nom de la variable utilisée pour accèder aux clés de la hashtable 
-      #contenant les messages localisés
-    BindingVariable=$binding.BoundParameters['BindingVariable'].ConstantValue
-      #Nom complet du fichier contenant les appels à Import-localizedData
-      #Dénormalisation assumée ;-)
-    ScriptPath=$Path      
-      #Nom du fichier contenant les appels à Import-localizedData
-    ScriptName=[System.IO.Path]::GetFileName($Path)
-      #Nom du répertoire du fichier 
-    BaseDirectory=[System.IO.Path]::GetDirectoryName($Path)
-      #Liste des clés trouvées
-    KeysFound=$null
-}
+  param (
+    $Path,
+    [System.Management.Automation.Language.StaticBindingResult] $Binding
+  )
+  
+  [pscustomobject]@{
+      PSTypeName='LocalizedDataInformations'
+        #Nom du fichier de localisation des messages 
+      FileName=$binding.BoundParameters['FileName'].ConstantValue
+        #Nom de la variable utilisée pour accèder aux clés de la hashtable 
+        #contenant les messages localisés
+      BindingVariable=$binding.BoundParameters['BindingVariable'].ConstantValue
+        #Nom complet du fichier contenant les appels à Import-localizedData
+        #Dénormalisation assumée ;-)
+      ScriptPath=$Path      
+        #Nom du fichier contenant les appels à Import-localizedData
+      ScriptName=[System.IO.Path]::GetFileName($Path)
+        #Nom du répertoire du fichier 
+      BaseDirectory=[System.IO.Path]::GetDirectoryName($Path)
+        #Liste des clés trouvées
+      KeysFound=$null
+  }
 } #New-LocalizedDataInformations
 
 Function Copy-LocalizedDataInformations{
@@ -201,6 +201,7 @@ Function Search-ASTImportLocalizedData {
 .SYNOPSIS
   Recherche dans un script les appels au cmdlet 'Import-LocalizedData'.
   On récupère le nom de la variable et le nom du fichier de localisation.
+  On émet seulement les cas utilisables.
 #> 
 
  [CmdletBinding()]
@@ -208,7 +209,6 @@ Function Search-ASTImportLocalizedData {
       #Chemin complet du fichier à analyser
       #contenant la déclaration d'Import-LocalizedData
      [Parameter(Position=1, Mandatory=$true)] 
-     [ValidateScript({Test-Path $_})]
    [string] $Path
  ) 
 
@@ -225,7 +225,31 @@ Function Search-ASTImportLocalizedData {
   foreach ($Binding in $ImportLocalizedDataCommands)
   {
      $Parameters=[System.Management.Automation.Language.StaticParameterBinder]::BindCommand($Binding)
-     New-LocalizedDataInformations $Path $Parameters 
+     $result=New-LocalizedDataInformations $Path $Parameters
+      #Comportement du cmdlet 
+     if (! $Parameters.BoundParameters.ContainsKey('FileName'))
+     { $result.FileName=[System.IO.Path]::GetFileNameWithoutExtension($Path)+'.psd1' }
+     elseif ($null -eq $Parameters.BoundParameters['FileName'].ConstantValue) 
+     {
+        #cas :  -FileName (Microsoft.PowerShell.Management\Split-Path $PSModuleInfo.Path -Leaf)       
+       Write-warning "Syntax not supported : $Binding"
+       Continue 
+     }
+     
+     if (! $Parameters.BoundParameters.ContainsKey('BindingVariable'))
+     {
+        $astParent=$Binding.Parent.Parent
+        if ($astParent -is [System.Management.Automation.Language.AssignmentStatementAst] )
+        {
+          if ($astParent.Left -is [System.Management.Automation.Language.VariableExpressionAst])
+          {
+              $result.BindingVariable=Split-VariablePath $astParent.Left
+              $result 
+          }
+        }
+     }
+     else 
+     { $result }
   } 
 } #Search-ASTImportLocalizedData
 
@@ -330,18 +354,18 @@ process {
   Write-debug "LocalizedDatas $LocalizedDatas"
   if ($LocalizedDatas.KeysFound.Count -eq 0) 
   { 
-    Write-Verbose ("Aucune clés de localization trouvée dans le fichier :`r`n'{0}'" -f $LocalizedDatas.ScriptPath)
+    Write-Verbose ("No localization key found in the file :`r`n'{0}'" -f $LocalizedDatas.ScriptPath)
     return $null
   } 
     #Charge le fichier de localisation utilisée dans le code analysé.
     # Si le fichier est introuvable on arrête le traitement
     #Todo Cache simple dans la portée du module 
   Import-LocalizedData -BindingVariable HelpMsg -Filename $LocalizedDatas.FileName -UI $Culture -BaseDirectory $LocalizedDatas.BaseDirectory -EA Stop
-   
+  $Compare=Compare-Object ($HelpMsg.Keys -as [string[]]) $LocalizedDatas.KeysFound -IncludeEqual 
    #On imbrique les données pour permettre la construction d'un rapport
   [pscustomobject]@{
     PSTypeName='MeasurementLocalizedData'
-    Sets=Compare-Object ($HelpMsg.Keys -as [string[]]) $LocalizedDatas.KeysFound -IncludeEqual|Split-Sideindicator
+    Sets=Split-Sideindicator -Inputobject $Compare
     ScriptPath=$LocalizedDatas.ScriptPath
     Culture=$Culture
     LocalizedDatas=$LocalizedDatas
@@ -352,19 +376,21 @@ process {
 
 Function Test-ImportLocalizedData {
  param(
-     #Chemin complet du fichier à analyser contenant
-     #la déclaration d'Import-LocalizedData
-   [Parameter(Position=1, Mandatory=$True)]
+      #Chemin complet du fichier à analyser contenant
+      #la déclaration d'Import-LocalizedData
+    [Parameter(Position=1, Mandatory=$True)]
+    [ValidateNotNullOrEmpty()]
    [string] $Primary,
 
-    #Fichiers secondaires contenant des noms de clés de localisation.
-   [Parameter(Position=2, Mandatory=$false)]
+      #Fichiers secondaires contenant des noms de clés de localisation.
+    [Parameter(Position=2, Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
    [string[]] $Secondary,
 
       # Permet de pointer sur le fichier d'aide associé à une ou plusieurs cultures
       # En cas d'échec, la recherche du fichier se fait dans le répertoire 
       # du $Primary.
-     [Parameter(Position=3, Mandatory=$false,ValueFromPipeline=$true)] 
+    [Parameter(Position=3, Mandatory=$false,ValueFromPipeline=$true)] 
    [System.Globalization.CultureInfo] $Culture='en-US'
 
    #todo
@@ -380,9 +406,9 @@ process {
         #Pour rechercher dans des fichiers différents  
         #On clone les mêmes clés trouvées dans le fichier primaire,
         #puis on  modifie le nom de fichier
-        $Secondary|Copy-LocalizedDataInformations -Item $_
-    }|
-    Update-ASTLocalizedData 
+        if ($PSBoundParameters.ContainsKey('Secondary') )
+        { $Secondary|Copy-LocalizedDataInformations -Item $_ }
+    }| Update-ASTLocalizedData -Passthru 
 
 
     $ofs=','
@@ -393,7 +419,7 @@ process {
         if ($_.Sets.NonExistent.count -gt 0)
         {
             $ResourceFile="{0}\{1}\{2}" -f $_.LocalizedDatas.BaseDirectory,$_.Culture,$_.LocalizedDatas.FileName
-            Write-host ("Le fichier {0} utilise des clés ({1}) qui n'existent pas dans la hashtable '{2}'." -f $_.LocalizedDatas.ScriptPath,"$($_.Sets.NonExistent)",$ResourceFile)
+            Write-host ("The file {0} uses keys ({1}) does not exist in the hashtable'{2}'." -f $_.LocalizedDatas.ScriptPath,"$($_.Sets.NonExistent)",$ResourceFile)
         }
     }
     
@@ -402,12 +428,12 @@ process {
      #une fois analysé tous les fichiers on connait toutes les clés utilisées par le code 
      #Reste à les comparer avec celles de la hashtable.
     Import-LocalizedData -BindingVariable HelpMsg -Filename $Result[-1].LocalizedDatas.FileName -UI $Result[-1].Culture -BaseDirectory $Result[-1].LocalizedDatas.BaseDirectory -EA Stop
-    $Inconnues=(compare ($HelpMsg.Keys -as [string[]]) $KeysFound)|split-sideindicator
-
+    $Compare=compare ($HelpMsg.Keys -as [string[]]) $KeysFound 
+    $Inconnues=Split-Sideindicator -Inputobject $Compare
     if ($Inconnues.New -gt 0)
     {
         $ResourceFile="{0}\{1}\{2}" -f $Result[-1].LocalizedDatas.BaseDirectory,$Result[-1].Culture,$Result[-1].LocalizedDatas.FileName
-        Write-host ("Les clés ({0}) déclarées dans le fichier '{1}' ne sont pas utilisées." -f "$($Inconnues.New)",$ResourceFile)
+        Write-host ("The keys ({0}) declared in the file '{1}' are not used." -f "$($Inconnues.New)",$ResourceFile)
     }
  }
 }#Test-ImportLocalizedData
