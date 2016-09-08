@@ -8,7 +8,6 @@ function Get-LocalizedCultures {
  #Renvoi les noms de répertoire correspondant à un nom de culture
   param(
      # Chemin contenant les répertoires des ressources localisées
-     #todo gestion du litteralPath
      [Parameter(Mandatory=$true)]
     [string] $BaseDirectory
   )
@@ -19,16 +18,31 @@ function Get-LocalizedCultures {
   }
 }
 
-#todo -AsDiagnosticRecord
-Function NewDiagnosticRecord{
- param ($Message,$Severity,$Ast)
-  [Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord]::new(
-    $Message,
-    $Ast.Extent,
-    $PSCmdlet.MyInvocation.InvocationName,
-    $Severity,
-    $null )
-}
+Function New-LocalizedDataDiagnostic{
+  param (
+   $ScriptName,
+   $Keys,
+   $ResourcesFile,
+    [validateSet('Nonexistent','Unused')]
+   $Type,
+   $Culture
+  )
+  
+  [pscustomobject]@{
+      PSTypeName='LocalizedDataDiagnostic'
+        #Nom complet du fichier contenant les clés concernées
+      ScriptName=$ScriptName    
+       #Nom des clés concernées   
+      Keys=$Keys
+       #Nom du fichier de localisation 
+      ResourcesFile=$ResourcesFile
+       #Unused      : clés inutilisées
+       #Nonexistent : clés inconnues 
+      Type=$Type
+       #Nom de la culture 
+      Culture=$Culture
+  }
+}#New-LocalizedDataDiagnostic
 
 
 Function Get-AST {
@@ -333,7 +347,7 @@ Function Split-SideIndicator {
  }
 }#Split-SideIndicator
 
-Function Measure-LocalizedData {
+Function Compare-LocalizedData {
 <#
 .SYNOPSIS
   Compare des données générées par la fonction Update-ASTLocalizedData.
@@ -371,10 +385,10 @@ process {
     LocalizedDatas=$LocalizedDatas
    }
  }
-} #Measure-LocalizedData
+} #Compare-LocalizedData
 
 
-Function Test-ImportLocalizedData {
+Function Measure-ImportLocalizedData {
  param(
       #Chemin complet du fichier à analyser contenant
       #la déclaration d'Import-LocalizedData
@@ -392,10 +406,6 @@ Function Test-ImportLocalizedData {
       # du $Primary.
     [Parameter(Position=3, Mandatory=$false,ValueFromPipeline=$true)] 
    [System.Globalization.CultureInfo] $Culture='en-US'
-
-   #todo
-   #[switch] $AsDiagnosticRecord
-
  ) 
 
 process {
@@ -412,18 +422,19 @@ process {
 
 
     $ofs=','
-    $Result=$ILD|Measure-LocalizedData -Culture $Culture 
-    #Je veux connaitre chaque fichier qui utilise des clés qui n'existent pas dans la hashtable.
+    $Result=$ILD|Compare-LocalizedData -Culture $Culture 
+     #Recherche tous les fichiers qui utilisent des clés inexistantes pas dans la hashtable de localisation
     $Result|
     Foreach {
         if ($_.Sets.NonExistent.count -gt 0)
         {
-            $ResourceFile="{0}\{1}\{2}" -f $_.LocalizedDatas.BaseDirectory,$_.Culture,$_.LocalizedDatas.FileName
-            Write-host ("The file {0} uses keys ({1}) does not exist in the hashtable'{2}'." -f $_.LocalizedDatas.ScriptPath,"$($_.Sets.NonExistent)",$ResourceFile)
+            $ResourcesFile="{0}\{1}\{2}" -f $_.LocalizedDatas.BaseDirectory,$_.Culture,$_.LocalizedDatas.FileName
+            New-LocalizedDataDiagnostic -ScriptName $_.LocalizedDatas.ScriptPath -Keys $_.Sets.NonExistent -ResourcesFile $ResourcesFile -Type Nonexistent -Culture $Culture 
+            #Write-host ("The file {0} uses keys ({1}) does not exist in the hashtable'{2}'." -f $_.LocalizedDatas.ScriptPath,"$($_.Sets.NonExistent)",$ResourceFile)
         }
     }
     
-    #Je veux connaitre les clés de la hashtable qui ne sont pas utilisées
+     #Contient les clés de la hashtable qui ne sont pas utilisées
     $KeysFound=$result.LocalizedDatas.KeysFound|Select -Unique
      #une fois analysé tous les fichiers on connait toutes les clés utilisées par le code 
      #Reste à les comparer avec celles de la hashtable.
@@ -432,9 +443,10 @@ process {
     $Inconnues=Split-Sideindicator -Inputobject $Compare
     if ($Inconnues.New -gt 0)
     {
-        $ResourceFile="{0}\{1}\{2}" -f $Result[-1].LocalizedDatas.BaseDirectory,$Result[-1].Culture,$Result[-1].LocalizedDatas.FileName
-        Write-host ("The keys ({0}) declared in the file '{1}' are not used." -f "$($Inconnues.New)",$ResourceFile)
+        $ResourcesFile="{0}\{1}\{2}" -f $Result[-1].LocalizedDatas.BaseDirectory,$Result[-1].Culture,$Result[-1].LocalizedDatas.FileName
+        New-LocalizedDataDiagnostic -ScriptName $Result[-1].LocalizedDatas.ScriptPath -Keys $Inconnues.New -ResourcesFile $ResourcesFile -Type Unused -Culture $Culture
+        #Write-host ("The keys ({0}) declared in the file '{1}' are not used." -f "$($Inconnues.New)",$ResourceFile)
     }
  }
-}#Test-ImportLocalizedData
+}#Measure-ImportLocalizedData
   

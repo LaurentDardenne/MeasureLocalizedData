@@ -9,14 +9,14 @@ Control only one file, example a module :
 Import-Module MeasureLocalizedData
  
 $Module='.\PSModule.psm1'
-Test-ImportLocalizedData -Primary $Module
+Measure-ImportLocalizedData -Primary $Module
 ```
 Or multiple files, example a module with several dot sourced scripts :
 ```Powershell
 $Module='.\Plaster.psm1'
 $Functions=@(
   '.\InvokePlaster.ps1',
-  '.\TestPlasterManifest.ps1'
+  '.\Measure-lasterManifest.ps1'
 )
 
-Test-ImportLocalizedData -Primary $Module -Secondary $Functions 
+Measure-ImportLocalizedData -Primary $Module -Secondary $Functions 

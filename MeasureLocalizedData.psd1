@@ -85,28 +85,27 @@ AliasesToExport = '*'
 # List of all files packaged with this module
 # FileList = @()
 
-# Private data to pass to the module specified in RootModule/ModuleToProcess. This may also contain a PSData hashtable with additional module metadata used by PowerShell.
+# Private data to pass to the module specified in RootModule/ModuleToProcess. 
 PrivateData = @{
-
+    
+     # PSData data to pass to the Publish-Module cmdlet
     PSData = @{
 
         # Tags applied to this module. These help with module discovery in online galleries.
-        # Tags = @()
+        Tags = @('Localization','Analyzer','Rule')
 
         # A URL to the license for this module.
-        # LicenseUri = ''
+        LicenseUri = 'https://creativecommons.org/licenses/by-nc-sa/4.0/'
 
         # A URL to the main website for this project.
-        # ProjectUri = ''
+        ProjectUri = 'https://github.com/LaurentDardenne/MeasureLocalizedData'
 
         # A URL to an icon representing this module.
-        # IconUri = ''
+        IconUri = 'https://github.com/LaurentDardenne/MeasureLocalizedData/blob/master/Icon/MeasureLocalizedData-50x50.png'
 
         # ReleaseNotes of this module
-        # ReleaseNotes = ''
-
+        ReleaseNotes = 'Initial version.'
     } # End of PSData hashtable
-
 } # End of PrivateData hashtable
 
 # HelpInfo URI of this module
