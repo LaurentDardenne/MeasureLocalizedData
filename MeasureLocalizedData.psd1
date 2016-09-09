@@ -12,7 +12,7 @@
 RootModule = 'MeasureLocalizedData.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.1.0.0'
+ModuleVersion = '0.2.0.0'
 
 # ID used to uniquely identify this module
 GUID = 'b8906c18-9f3a-495a-ade8-f3b9f660f13a'
@@ -48,9 +48,7 @@ CLRVersion = '4.0'
 # ProcessorArchitecture = ''
 
 # Modules that must be imported into the global environment prior to importing this module
-RequiredModules=@(
- @{ModuleName="PSScriptAnalyzer"; GUID='d6245802-193d-4068-a631-8863a4342a18'; ModuleVersion="1.5.0"}
-)
+#RequiredModules=@()
 
 # Assemblies that must be loaded prior to importing this module
 # RequiredAssemblies = @()
@@ -68,16 +66,16 @@ RequiredModules=@(
 # NestedModules = @()
 
 # Functions to export from this module
-FunctionsToExport = '*'
+FunctionsToExport = 'Measure-ImportLocalizedData'
 
 # Cmdlets to export from this module
-CmdletsToExport = '*'
+#CmdletsToExport = '*'
 
 # Variables to export from this module
-VariablesToExport = '*'
+#VariablesToExport = '*'
 
 # Aliases to export from this module
-AliasesToExport = '*'
+#AliasesToExport = '*'
 
 # List of all modules packaged with this module
 # ModuleList = @()
@@ -101,7 +99,7 @@ PrivateData = @{
         ProjectUri = 'https://github.com/LaurentDardenne/MeasureLocalizedData'
 
         # A URL to an icon representing this module.
-        IconUri = 'https://github.com/LaurentDardenne/MeasureLocalizedData/blob/master/Icon/MeasureLocalizedData-50x50.png'
+        IconUri = 'https://github.com/LaurentDardenne/MeasureLocalizedData/blob/master/Icon/MeasureLocalizedData.png'
 
         # ReleaseNotes of this module
         ReleaseNotes = 'Initial version.'
