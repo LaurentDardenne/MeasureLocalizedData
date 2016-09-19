@@ -1,4 +1,4 @@
-$ModuleVersion=(Import-ManifestData "$MeasureLocalizedDataVcs\MeasureLocalizedData.psd1").ModuleVersion
+﻿$ModuleVersion=(Import-ManifestData "$MeasureLocalizedDataVcs\MeasureLocalizedData.psd1").ModuleVersion
 $Source='https://www.myget.org/F/ottomatt/api/v2/package'
 
 nuspec 'MeasureLocalizedData' $ModuleVersion {

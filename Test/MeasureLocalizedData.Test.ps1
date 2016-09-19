@@ -159,6 +159,7 @@ Describe "Measure localized data" {
         $Result[1].Keys[0] | should be 'Key_unused_by_the_source_code'
         $Result[1].Type | should be 'Unused'
         $Result[1].Culture | should be 'en-US'
+        $Result[1].ScriptName | should be $null
 
         $Result[2].Keys.Count | should be 3
         $Result[2].Keys[0] | should be 'Information' #Typo in 'Fr-fr' resource file
@@ -172,6 +173,7 @@ Describe "Measure localized data" {
         $Result[3].Keys[1] | should be 'Informaion' #Typo
         $Result[3].Type | should be 'Unused'
         $Result[3].Culture | should be 'fr-FR'
+        $Result[3].ScriptName | should be $null
       }  
 
       It "Wrong namming for FileName parameter" {

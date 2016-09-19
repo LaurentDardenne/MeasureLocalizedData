@@ -547,8 +547,8 @@ process {
     $Inconnues=Split-Sideindicator -Inputobject $Compare
     if ($Inconnues.New -gt 0)
     {
-        $ResourcesFile="{0}\{1}\{2}" -f $Result[-1].LocalizedDatas.BaseDirectory,$Result[-1].Culture,$Result[-1].LocalizedDatas.FileName
-        New-LocalizedDataDiagnostic -ScriptName $Result[-1].LocalizedDatas.ScriptPath -Keys $Inconnues.New -ResourcesFile $ResourcesFile -Type Unused -Culture $Culture
+        #Les clés inutilisées ne sont rattachées à aucun fichier
+        New-LocalizedDataDiagnostic -ScriptName $null -Keys $Inconnues.New -ResourcesFile $ResourcesFile -Type Unused -Culture $Culture
     }
  }
 }#Measure-ImportLocalizedData

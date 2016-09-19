@@ -12,7 +12,7 @@
 RootModule = 'MeasureLocalizedData.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.2.0'
+ModuleVersion = '0.3.0'
 
 # ID used to uniquely identify this module
 GUID = 'b8906c18-9f3a-495a-ade8-f3b9f660f13a'

@@ -23,7 +23,7 @@ Measure-ImportLocalizedData -Primary $Module -Secondary $Functions
 ```
 This call return the key nammed 'ShouldCreateNewPlasterManifest'  indicated as 'unused' :
 ```Powershell
-ScriptName    : C:\Users\Laurent\Documents\WindowsPowerShell\Modules\Plaster\TestPlasterManifest.ps1
+ScriptName    : 
 Keys          : {ShouldCreateNewPlasterManifest}
 ResourcesFile : C:\Users\Laurent\Documents\WindowsPowerShell\Modules\Plaster\en-US\Plaster.Resources.psd1
 Type          : Unused
