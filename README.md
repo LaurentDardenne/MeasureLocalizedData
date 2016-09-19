@@ -16,7 +16,7 @@ Or multiple files, example a module with several dot sourced scripts :
 $Module='.\Plaster.psm1'
 $Functions=@(
   '.\InvokePlaster.ps1',
-  '.\Measure-lasterManifest.ps1'
+  '.\TestPlasterManifest.ps1'
 )
 
 Measure-ImportLocalizedData -Primary $Module -Secondary $Functions
@@ -34,7 +34,7 @@ We must add all scripts :
 $Module='.\Plaster.psm1'
 $Functions=@(
   '.\InvokePlaster.ps1',
-  '.\Measure-lasterManifest.ps1'
+  '.\TestPlasterManifest.ps1'
   '.\NewPlasterManifest.ps1'
 )
 
