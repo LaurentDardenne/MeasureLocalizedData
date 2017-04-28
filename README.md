@@ -62,6 +62,7 @@ This object contains the following properties :
    * ResourcesFile : Full Name of the localized resource file
 
    * Type          : Error type
+
                      - Unused      : Unused keys
                      - Nonexistent : unknown keys
 
