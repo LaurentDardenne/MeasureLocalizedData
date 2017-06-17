@@ -3,6 +3,15 @@
 Control the localized keys used with Import-LocalizedData.
 Retrieves the nonexistent keys and the unused keys.
 
+To install this module :
+```Powershell
+$PSGalleryPublishUri = 'https://www.myget.org/F/ottomatt/api/v2/package'
+$PSGallerySourceUri = 'https://www.myget.org/F/ottomatt/api/v2'
+
+Register-PSRepository -Name OttoMatt -SourceLocation $PSGallerySourceUri -PublishLocation $PSGalleryPublishUri #-InstallationPolicy Trusted
+Install-Module MeasureLocalizedData -Repository OttoMatt
+```
+
 Control only one file, example a module :
 ```Powershell
  #PowershellGet                                                                                                            
